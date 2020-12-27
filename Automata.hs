@@ -434,6 +434,23 @@ updateInit q m = Machine { states = states m
                          , transitions = transitions m
                          , accepts = accepts m 
                          }
+
+
+uncontrollableFCont :: Machine -> State -> State -> Bool
+uncontrollableFCont m qs qt = if (qs == qt) || (L.null backwardLoop) then True else not $ isControllable $ failReplace nm backwardLoop
+  where nm = cleanUp $ updateInit qt m
+        backwardLoop = [(s,(l,t)) | (s,(l,t)) <- transitions nm, t==qs, s/=t]
+
+
+failReplace :: Machine -> [Transition] -> Machine
+failReplace m failTr = Machine  { states = states m
+                                , tinit = tinit m
+                                , transitions = newTr
+                                , accepts = accepts m
+                                }
+  where unchangedTr = [t | t <- transitions m, not (t `L.elem` failTr)]
+        newTr = unchangedTr ++ [(s,((Receive,"l"), s)) | (s,(l,t)) <- failTr]
+
                          
 -- removes unused transitions
 cleanUp :: Machine -> Machine

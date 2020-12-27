@@ -358,6 +358,18 @@ inControllableBarb m p =
   L.filter (\(s,((d, lab),t)) -> 
              s==p && d==Receive && (isControllable $ updateInit t m) ) $ transitions m 
 
+
+outputCovariance :: Machine -> State -> Machine -> Bool
+outputCovariance m1 p m = (L.and $ L.map (\x -> (outBarb m1 p) `isSubsetOf` (outBarb m x)) sendStates)
+                          && 
+                          (L.and $ L.map (\(s,t) -> uncontrollableFCont m s t) sendSuccessors)
+  where sendStates = reachableSendStates (tinit m) m
+        excludedLabels x = (outBarb m x) `S.difference` (outBarb m1 p)
+        sendSuccessors =  L.nub $ concat $ 
+                          L.map (\x -> L.map(\(s,((d,m),t)) -> (s,t))
+                          (L.filter (\(s,((d,m),t)) -> s==x && d==Send && m `S.member` excludedLabels x) (transitions m))) sendStates
+
+
 oneStep :: Bool -> Machine -> Value -> Maybe [(Label, Value)]
 oneStep debug m1 v@(p,m)
   | isFinalConf m1 v = (if debug then (trace ("Final: "++(show (p,(tinit m)))++"\n"++(printMachine m)) ) else (\x  -> x  )) $ 
@@ -378,7 +390,7 @@ oneStep debug m1 v@(p,m)
                      a==b]
       in Just next
          --
-  | (isOutput m1 p) && (isOutput m (tinit m)) && ((outBarb m1 p) == (outBarb m (tinit m))) = 
+  | (isOutput m1 p) && (isOutput m (tinit m)) && (outputCovariance m1 p m) = 
         (if debug then (trace ("OutSync: "++(show (p,(tinit m)))++"\n"++(printMachine m)) ) else (\x  -> x  )) $ 
         let psmoves = L.map snd $ L.filter (\(x,(y,z)) -> x==p) $ transitions m1
             qsmoves = L.map snd $ L.filter (\(x,(y,z)) -> x==(tinit m)) $ transitions m               
@@ -392,7 +404,7 @@ oneStep debug m1 v@(p,m)
               next = L.nub $ [(a, (x, updateInit (ssucc (tinit m)) m'))| (a,x) <- psmoves, (b,m') <- newmachines, a==b] 
           in if (not $ L.null qstates) 
                 &&
-                (L.and $ L.map (\x -> (outBarb m1 p) == (outBarb m x)) qstates)
+                (outputCovariance m1 p m)
              then Just next
              else (if debug then (trace ("BadOut: "++(show (p,(tinit m)))++"\n"++(printMachine m)) ) else (\x  -> x  )) $ 
                   Nothing
