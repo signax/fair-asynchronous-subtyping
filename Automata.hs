@@ -443,11 +443,11 @@ uncontrollableFCont m qs qt = if (qs == qt) || (L.null backwardLoop) then True e
 
 
 failReplace :: Machine -> [Transition] -> Machine
-failReplace m failTr =  cleanUp Machine { states = newSt
-                                        , tinit = tinit m
-                                        , transitions = newTr
-                                        , accepts = accepts m
-                                        }
+failReplace m failTr = Machine { states = newSt
+                               , tinit = tinit m
+                               , transitions = newTr
+                               , accepts = accepts m
+                               }
   where unchangedTr = [t | t <- transitions m, not (t `L.elem` failTr)]
         newTr = unchangedTr ++ [(s,(l, "Fail")) | (s,(l,t)) <- failTr] ++ [("Fail",((Receive, "l"),"Fail"))]
         newSt = states m ++ ["Fail"]
