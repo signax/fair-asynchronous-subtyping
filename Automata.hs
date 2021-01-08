@@ -437,7 +437,10 @@ updateInit q m = Machine { states = states m
 
 
 uncontrollableFCont :: Machine -> State -> State -> Bool
-uncontrollableFCont m qs qt = if (qs == qt) || (L.null backwardLoop) then True else not $ isControllable $ failReplace nm backwardLoop
+uncontrollableFCont m qs qt
+  | (qs == qt) =  True
+  | L.null backwardLoop = False 
+  | otherwise = not $ isControllable $ failReplace nm backwardLoop
   where nm = cleanUp $ updateInit qt m
         backwardLoop = [(s,(l,t)) | (s,(l,t)) <- transitions nm, t==qs, s/=t]
 

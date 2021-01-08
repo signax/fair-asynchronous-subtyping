@@ -4,11 +4,11 @@ import System.Environment
 import System.Process
 
 -- generator of types in the following form
--- sub : !c;?d;rec X. [!a1;?b0;?b1;!a0;end,  !a2;?b0;?b1;?b2;X, ..., !ai+1;?b0;..?bi+1;X]
--- sup : ?d;!c;rec X. [!a0;end,  !a1;?b0;?b1;X, ..., !ai;?b0;..;?bi;X]
+-- sub : !c;?d;rec X. [!a0;end,  !a1;?b0;?b1;X, ..., !ai;?b0;..;?bx;X]
+-- sup : ?d;!c;rec X. [!a0;end,  !a1;?b0;?b1;X, ..., !ai;?b0;..;?by;X] 
 
 mkPair :: Int -> Int -> (String, String)
-mkPair x y = let sub = "!c;?d;rec X. [!a1;?b0;?b1;!a0;end, "++ branches 1 x ++"]"
+mkPair x y = let sub = "!c;?d;rec X. [!a0;end, "++ branches 0 x ++"]"
                  sup = "?d;!c;rec X. [!a0;end, "++ branches 0 y ++"]"
              in (sub, sup)
 
@@ -16,8 +16,7 @@ mkPair x y = let sub = "!c;?d;rec X. [!a1;?b0;?b1;!a0;end, "++ branches 1 x ++"]
 branches :: Int -> Int -> String
 branches br i = intercalate ", " $
                map (\x -> branch br x) [1..i]
-  where branch 0 i = sndi "a" i ++ ";" ++ rcvij "b" 0 i ++ ";X"
-        branch _ i = sndi "a" (i+1) ++ ";" ++ rcvij "b" 0 (i+1) ++ ";X"
+  where branch _ i = sndi "a" i ++ ";" ++ rcvij "b" 0 i ++ ";X"
 
 
 opij :: String -> String -> Int -> Int -> String
