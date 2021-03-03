@@ -360,15 +360,12 @@ inControllableBarb m p =
 
 
 outputCovariance :: Machine -> State -> Machine -> Bool
-outputCovariance m1 p m = (L.and $ L.map (\x -> (outBarb m1 p) `isSubsetOf` (outBarb m x)) sendStates)
-                          && 
-                          (L.and $ L.map (\(s,t) -> uncontrollableFCont m s t) sendSuccessors)
+outputCovariance m1 p m = (L.and $ L.map (\x -> (outBarb m1 p) == (outBarb m x)) sendStates)
+                          ||
+                          ((L.and $ L.map (\x -> (outBarb m1 p) `isSubsetOf` (outBarb m x)) sendStates)
+                            &&
+                            (isFinite m1 p || isFinite m (tinit m)))
   where sendStates = reachableSendStates (tinit m) m
-        excludedLabels x = (outBarb m x) `S.difference` (outBarb m1 p)
-        sendSuccessors =  L.nub $ concat $ 
-                          L.map (\x -> L.map(\(s,((d,m),t)) -> (s,t))
-                          (L.filter (\(s,((d,m),t)) -> s==x && d==Send && m `S.member` excludedLabels x) (transitions m))) sendStates
-
 
 oneStep :: Bool -> Machine -> Value -> Maybe [(Label, Value)]
 oneStep debug m1 v@(p,m)

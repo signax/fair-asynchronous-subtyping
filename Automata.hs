@@ -339,6 +339,12 @@ ampersand dir m q = not $ selfloop q q []
                                    transitions m
                         in L.or $ L.map (\x -> selfloop x trg (q:visited)) next
 
+isFinite :: Machine -> State -> Bool
+isFinite m t = helper m t []
+  where helper m s seen
+          | L.null (successors m s) = True
+          | not $ L.null $ L.filter (\x -> (snd x) `L.elem` seen) $ successors m s = False
+          | otherwise = L.and $ L.map (\x -> helper m x $ seen++(L.map(snd) $ successors m s)) $ L.map(snd) $ successors m s
 
 isControllable :: Machine -> Bool
 isControllable om = helper [] (tinit om) om
@@ -452,26 +458,6 @@ updateInit q m = Machine { states = states m
                          , transitions = transitions m
                          , accepts = accepts m 
                          }
-
-
-uncontrollableFCont :: Machine -> State -> State -> Bool
-uncontrollableFCont m qs qt
-  | (qs == qt) =  True
-  | L.null backwardLoop = False 
-  | otherwise = not $ isControllable $ failReplace nm backwardLoop
-  where nm = cleanUp $ updateInit qt m
-        backwardLoop = [(s,(l,t)) | (s,(l,t)) <- transitions nm, t==qs, s/=t]
-
-
-failReplace :: Machine -> [Transition] -> Machine
-failReplace m failTr = Machine { states = newSt
-                               , tinit = tinit m
-                               , transitions = newTr
-                               , accepts = accepts m
-                               }
-  where unchangedTr = [t | t <- transitions m, not (t `L.elem` failTr)]
-        newTr = unchangedTr ++ [(s,(l, "Fail")) | (s,(l,t)) <- failTr] ++ [("Fail",((Receive, "l"),"Fail"))]
-        newSt = states m ++ ["Fail"]
 
                          
 -- removes unused transitions
