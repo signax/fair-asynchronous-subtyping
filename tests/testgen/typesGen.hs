@@ -4,8 +4,8 @@ import System.Environment
 import System.Process
 
 -- generator of types in the following form
--- sub : !c;?d;rec X. [!a0;end,  !a1;?b0;?b1;X, ..., !ai;?b0;..;?bx;X]
--- sup : ?d;!c;rec X. [!a0;end,  !a1;?b0;?b1;X, ..., !ai;?b0;..;?by;X] 
+-- sub : !c;?d;rec X. [!a0;end,  !a1;?b0;?b1;X, ..., !ax;?b0;..;?bx;X]
+-- sup : ?d;!c;rec X. [!a0;end,  !a1;?b0;?b1;X, ..., !ay;?b0;..;?by;X] 
 
 mkPair :: Int -> Int -> (String, String)
 mkPair x y = let sub = "!c;?d;rec X. [!a0;end, "++ branches 0 x ++"]"
