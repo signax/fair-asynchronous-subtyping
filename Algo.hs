@@ -57,7 +57,7 @@ checkingAlgorithm bound dual debug nomin t1 t2 =
           Nothing -> putStrLn "Maybe"
           Just (b',(to,ancs)) -> 
             let t = tagRemovable m1 to 
-                b = (isControllable m2) && b'
+                b = (not $ isControllable m2) ||  b'
             in
             do case prune m1 ancs t of
                  Nothing -> do putStrLn (show b)
@@ -72,7 +72,7 @@ subCheck bound m1 m2 =
     Nothing -> False
     Just (b',(to,ancs)) -> 
       let t = tagRemovable m1 to 
-          b = (isControllable m2) && b'
+          b = (not $ isControllable m2) ||  b'
       in case prune m1 ancs t of
           Nothing -> b
           Just t' -> let ts = splitTree ancs t'
@@ -395,9 +395,11 @@ oneStep debug m1 v@(p,m)
         in Just next
   | (isOutput m1 p) && not (isOutput m (tinit m)) =
           (if debug then (trace ("Out: "++(show (p,(tinit m)))++"\n"++(printMachine m)) ) else (\x  -> x  )) $ 
-          let psmoves = L.map snd $ L.filter (\(x,(y,z)) -> x==p) $ transitions m1              
+          let psmoves = L.map snd $ L.filter (\(x,(y,z)) -> x==p) $ transitions m1
+              -- unfold(S)
               qstates = reachableSendStates (tinit m) m
               newmachines = L.map (\a -> ((Send, a), replaceInMachine m (Send, a) qstates)) $ S.toList (outBarb m1 p)
+              -- end of unfold(S)
               next = L.nub $ [(a, (x, updateInit (ssucc (tinit m)) m'))| (a,x) <- psmoves, (b,m') <- newmachines, a==b] 
           in if (not $ L.null qstates) 
                 &&
@@ -469,7 +471,7 @@ mkGraph (Node v xs tag) = ((tag, v), helper (tag, v) xs)
 
 printEdge :: NodeMap -> Edge -> String
 printEdge map (s,(l,t)) = (printNodeId map s)++" -> "++(printNodeId map t)
-                          ++"[lhead=cluster_conf"++(printNodeId map t)
+                          ++"[style=filled,color=red,fontcolor=red,lhead=cluster_conf"++(printNodeId map t)
                           ++", ltail=cluster_conf"++(printNodeId map s)
                           ++", label=\""++(printEdgeLabel l)++"\", minlen=3];"
 
@@ -478,7 +480,7 @@ printAncestorEdge map (s',t') =
   let s = (Tmp, s')
       t = (Tmp, t')
   in  (printNodeId map s)++" -> "++(printNodeId map t)
-      ++" [lhead=cluster_conf"++(printNodeId map t)
+      ++" [style=filled,color=blue,lhead=cluster_conf"++(printNodeId map t)
       ++", ltail=cluster_conf"++(printNodeId map s)
       ++", minlen=3, style=dashed];"
 
